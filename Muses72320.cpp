@@ -100,6 +100,120 @@ void Self::setGain(volume_t lch, volume_t rch)
 	}
 }
 
+/**
+ * Overall volume setting from attenuation to gain.
+ *
+ * @param[in] volume_t lch Att to Gain Volume LEFT Ch (-223 ~ 0 ~ 66)
+ * @param[in] volume_t rch Att to Gain Volume RIGHT Ch (-223 ~ 0 ~ 66)
+ * @return void
+ */
+void Self::setVolumeAttToGain(volume_t lch, volume_t rch)
+{
+  E_VolDiv lch_div = E_VolDiv::Att;
+  E_VolDiv rch_div = E_VolDiv::Att;
+
+  // decide L ch E_VolDiv start
+  if (lch < 0) {
+    // Volume <- lch (-223, 0)
+    // Gain <- 0
+    lch_div = E_VolDiv::Att;
+  } else if (lch == 0) {
+    // Volume <- 0
+    // Gain <- 0
+    lch_div = E_VolDiv::Zero;
+  } else {
+    // Volume <- 0
+    // Gain <- lch (0, 63)
+    lch_div = E_VolDiv::Gain;
+  }
+  // decide L ch E_VolDiv end
+
+  // decide R ch E_VolDiv start
+  if (rch < 0) {
+    // Volume <- rch (-223, 0)
+    // Gain <- 0
+    rch_div = E_VolDiv::Att;
+  } else if (rch == 0) {
+    // Volume <- 0
+    // Gain <- 0
+    rch_div = E_VolDiv::Zero;
+  } else {
+    // Volume <- 0
+    // Gain <- rch (0, 63)
+    rch_div = E_VolDiv::Gain;
+  }
+  // decide R ch E_VolDiv end
+
+  if (lch_div == rch_div) {
+    switch (lch_div) {
+      case E_VolDiv::Att: {
+        setVolume(lch, rch);
+        setGain(0, 0);
+        break;
+      }
+      case E_VolDiv::Zero: {
+        setVolume(0, 0);
+        setGain(0, 0);
+        break;
+      }
+      case E_VolDiv::Gain: {
+        setVolume(0, 0);
+        setGain(lch, rch);
+        break;
+      }
+      default: {
+        // unreachable
+        mute();
+        setGain(0, 0);
+        break;
+      }
+    }
+  } else {
+    switch (lch_div) {
+      case E_VolDiv::Att: {
+        if (rch_div == E_VolDiv::Zero) {
+          setVolume(lch, 0);
+          setGain(0, 0);
+        } else {
+          // rch_div == E_VolDiv::Gain
+          setVolume(lch, 0);
+          setGain(0, rch);
+        }
+        break;
+      }
+      case E_VolDiv::Zero: {
+        if (rch_div == E_VolDiv::Att) {
+          setVolume(0, rch);
+          setGain(0, 0);
+        } else {
+          // rch_div == E_VolDiv::Gain
+          setVolume(0, 0);
+          setGain(0, rch);
+        }
+        break;
+      }
+      case E_VolDiv::Gain: {
+        if (rch_div == E_VolDiv::Att) {
+          setVolume(0, rch);
+          setGain(lch, 0);
+        } else {
+          // rch_div == E_VolDiv::Zero
+          setVolume(0, 0);
+          setGain(lch, 0);
+        }
+        break;
+      }
+      default: {
+        // unreachable
+        mute();
+        setGain(0, 0);
+        break;
+      }
+    }
+  }
+  return;
+}
+
 void Self::mute()
 {
   if (bitRead(states, s_state_bit_attenuation)) {
