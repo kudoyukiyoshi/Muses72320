@@ -52,7 +52,14 @@ public:
 	void setGain(volume_t left, volume_t right);
 	inline void setGain(volume_t volume) { setGain(volume, volume); }
 
-  void mute();
+	// function merged from setVolume and setGain.
+	// audio level goes from [-111.5, 0.0] dB
+	// gain is constrained to [0, 31.5].
+	// input goes from -223 to 0 and 0 to 63.
+	void setVolumeAttToGain(volume_t left, volume_t right);
+	inline void setVolumeAttToGain(volume_t volume) { setVolumeAttToGain(volume, volume); }
+
+	void mute();
 
 	// enable or disable zero crossing.
 	// enabling zero crossing only works if the zero crossing terminal is set low.
@@ -73,6 +80,16 @@ private:
 	//   5:     disable zero crossing
 	//   [4-0]: not used
 	data_t states;
+};
+
+/**
+ * enum FOR setVolumeAttToGain
+ */
+enum class E_VolDiv
+{
+  Att,  /** Attenuation */
+  Zero, /** Zero Att, Zero Gain */
+  Gain, /** Gain */
 };
 
 #endif // INCLUDED_MUSES_72320
